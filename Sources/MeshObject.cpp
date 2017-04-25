@@ -1,17 +1,17 @@
 #include "pch.h"
 #include "MeshObject.h"
 
-#include <Kore/Graphics/Graphics.h>
+#include <Kore/Graphics4/Graphics.h>
 #include <Kore/Log.h>
 
 using namespace Kore;
 
-MeshObject::MeshObject(const char* meshFile, const char* textureFile, const Kore::VertexStructure& structure, float scale) : occlusionQuery(0), pixelCount(0),occlusionState(Visible), occluded(true), useQueries(true) {
+MeshObject::MeshObject(const char* meshFile, const char* textureFile, const Graphics4::VertexStructure& structure, float scale) : occlusionQuery(0), pixelCount(0),occlusionState(Visible), occluded(true), useQueries(true) {
     mesh = loadObj(meshFile);
-    image = new Texture(textureFile, true);
+    image = new Graphics4::Texture(textureFile, true);
     
     // Mesh Vertex Buffer
-    vertexBuffer = new VertexBuffer(mesh->numVertices, structure, 0);
+    vertexBuffer = new Graphics4::VertexBuffer(mesh->numVertices, structure, 0);
     float* vertices = vertexBuffer->lock();
     
     float min_x, max_x, min_y;
@@ -39,7 +39,7 @@ MeshObject::MeshObject(const char* meshFile, const char* textureFile, const Kore
     }
     vertexBuffer->unlock();
 
-	indexBuffer = new IndexBuffer(mesh->numFaces * 3);
+	indexBuffer = new Graphics4::IndexBuffer(mesh->numFaces * 3);
 	int* indices = indexBuffer->lock();
 	for (int i = 0; i < mesh->numFaces * 3; ++i) {
 		indices[i] = mesh->indices[i];
@@ -47,10 +47,10 @@ MeshObject::MeshObject(const char* meshFile, const char* textureFile, const Kore
 	indexBuffer->unlock();
     
     // Bounding Box Vertex Buffer
-    VertexStructure str;
-    str.add("pos", Float3VertexData);
+	Graphics4::VertexStructure str;
+    str.add("pos", Graphics4::Float3VertexData);
     trianglesCount = 12 * 3;
-    vertexBoundingBoxBuffer = new VertexBuffer(trianglesCount * 3, str, 0);
+    vertexBoundingBoxBuffer = new Graphics4::VertexBuffer(trianglesCount * 3, str, 0);
     boundingBoxVertices = vertexBoundingBoxBuffer->lock();
     
     float boundingBox[] = {
@@ -74,13 +74,13 @@ MeshObject::MeshObject(const char* meshFile, const char* textureFile, const Kore
     }
     vertexBoundingBoxBuffer->unlock();
     
-    useQueries = Graphics::initOcclusionQuery(&occlusionQuery);
+    useQueries = Graphics4::initOcclusionQuery(&occlusionQuery);
     
     M = mat4::Identity();
 }
 
 MeshObject::~MeshObject() {
-    Graphics::deleteOcclusionQuery(occlusionQuery);
+    Graphics4::deleteOcclusionQuery(occlusionQuery);
 }
 
 void MeshObject::renderOcclusionQuery() {
@@ -91,14 +91,14 @@ void MeshObject::renderOcclusionQuery() {
         if (occlusionState != Waiting) {
             occlusionState = Waiting;
             //vertexBoundingBoxBuffer->unlock();
-            Graphics::setVertexBuffer(*vertexBoundingBoxBuffer);
-            Graphics::renderOcclusionQuery(occlusionQuery, trianglesCount);
+            Graphics4::setVertexBuffer(*vertexBoundingBoxBuffer);
+            Graphics4::renderOcclusionQuery(occlusionQuery, trianglesCount);
             //boundingBoxVertices = vertexBoundingBoxBuffer->lock();
         }
         
-        bool available = Graphics::isQueryResultsAvailable(occlusionQuery);
+        bool available = Graphics4::isQueryResultsAvailable(occlusionQuery);
         if (available) {
-            Graphics::getQueryResults(occlusionQuery, &pixelCount);
+            Graphics4::getQueryResults(occlusionQuery, &pixelCount);
             if (pixelCount > 0) {
                 occluded = true;
                 occlusionState = Visible;
@@ -115,14 +115,9 @@ void MeshObject::renderOcclusionQuery() {
 
 }
 
-void MeshObject::render(TextureUnit tex) {
-    Graphics::setTexture(tex, image);
-    Graphics::setVertexBuffer(*vertexBuffer);
-    Graphics::setIndexBuffer(*indexBuffer);
-    Graphics::drawIndexedVertices();
+void MeshObject::render(Graphics4::TextureUnit tex) {
+    Graphics4::setTexture(tex, image);
+    Graphics4::setVertexBuffer(*vertexBuffer);
+    Graphics4::setIndexBuffer(*indexBuffer);
+    Graphics4::drawIndexedVertices();
 }
-
-
-
-
-

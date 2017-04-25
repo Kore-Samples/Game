@@ -5,19 +5,19 @@
 #include <Kore/System.h>
 #include <Kore/Input/Keyboard.h>
 #include <Kore/Input/Mouse.h>
-#include <Kore/Graphics/Image.h>
-#include <Kore/Graphics/Graphics.h>
-#include <Kore/Graphics/Color.h>
+#include <Kore/Graphics1/Image.h>
+#include <Kore/Graphics4/Graphics.h>
+#include <Kore/Graphics1/Color.h>
 #include <Kore/Log.h>
 #include "MeshObject.h"
 
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 #include <Kore/Math/Quaternion.h>
 #include <Kore/Vr/VrInterface.h>
 #include <Kore/Vr/SensorState.h>
 #endif
 
-#include <Kore/Graphics/Graphics.h>
+#include <Kore/Graphics4/Graphics.h>
 
 using namespace Kore;
 
@@ -27,9 +27,9 @@ namespace {
     const int width = 1024;
     const int height = 768;
     double startTime;
-    Shader* vertexShader;
-    Shader* fragmentShader;
-    Program* program;
+    Graphics4::Shader* vertexShader;
+	Graphics4::Shader* fragmentShader;
+	Graphics4::Program* program;
     
     // null terminated array of MeshObject pointers
     MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
@@ -40,10 +40,10 @@ namespace {
 	bool sit = false;
     
     // uniform locations - add more as you see fit
-    TextureUnit tex;
-    ConstantLocation pLocation;
-    ConstantLocation vLocation;
-    ConstantLocation mLocation;
+	Graphics4::TextureUnit tex;
+	Graphics4::ConstantLocation pLocation;
+	Graphics4::ConstantLocation vLocation;
+	Graphics4::ConstantLocation mLocation;
 
     vec3 playerPosition;
     vec3 globe;
@@ -56,7 +56,7 @@ namespace {
 	bool debug = false;
     
 	void initCamera() {
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 		playerPosition = vec3(0, 0, 0);
 #else
 		playerPosition = vec3(0, 0, 20); 
@@ -64,7 +64,7 @@ namespace {
 		globe = vec3(0, Kore::pi, 0);
 	}
 
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 	mat4 getViewMatrix(SensorState* state) {
 
 		Quaternion orientation = state->pose->vrPose->orientation;
@@ -152,12 +152,12 @@ namespace {
 			playerPosition.y() -= speed;
 		}
 
-		Graphics::begin();
-		Graphics::clear(Graphics::ClearColorFlag | Graphics::ClearDepthFlag, Color::Black, 1.0f, 0);
+		Graphics4::begin();
+		Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, Graphics1::Color::Black, 1.0f, 0);
 
 		program->set();
 		
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 
 		VrInterface::begin();
 		for (int eye = 0; eye < 2; ++eye) {
@@ -167,11 +167,11 @@ namespace {
 			mat4 view = getViewMatrix(state);
 			mat4 proj = getProjectionMatrix(state);
 
-			Graphics::setMatrix(vLocation, view);
-			Graphics::setMatrix(pLocation, proj);
+			Graphics4::setMatrix(vLocation, view);
+			Graphics4::setMatrix(pLocation, proj);
 
 			// Render world
-			Graphics::setMatrix(mLocation, tiger->M);
+			Graphics4::setMatrix(mLocation, tiger->M);
 			tiger->render(tex);
 
 			VrInterface::endRender(eye);
@@ -234,8 +234,8 @@ namespace {
         renderObjectNum = renderCount;
         
 #endif
-		Graphics::end();
-		Graphics::swapBuffers();
+		Graphics4::end();
+		Graphics4::swapBuffers();
     }
 	
 	void keyDown(KeyCode code, wchar_t character) {
@@ -263,12 +263,12 @@ namespace {
 			break;
 		case Key_R:
 			initCamera();
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 			VrInterface::resetHmdPose();
 #endif
 			break;
 		case Key_U:
-#ifdef VR_RIFT
+#ifdef KORE_OCULUS
 			sit = !sit;
 			if (sit) VrInterface::updateTrackingOrigin(TrackingOrigin::Sit);
 			else VrInterface::updateTrackingOrigin(TrackingOrigin::Stand);
@@ -335,16 +335,16 @@ namespace {
     void init() {
         FileReader vs("shader.vert");
         FileReader fs("shader.frag");
-        vertexShader = new Shader(vs.readAll(), vs.size(), VertexShader);
-        fragmentShader = new Shader(fs.readAll(), fs.size(), FragmentShader);
+        vertexShader = new Graphics4::Shader(vs.readAll(), vs.size(), Graphics4::VertexShader);
+        fragmentShader = new Graphics4::Shader(fs.readAll(), fs.size(), Graphics4::FragmentShader);
         
         // This defines the structure of your Vertex Buffer
-        VertexStructure structure;
-        structure.add("pos", Float3VertexData);
-        structure.add("tex", Float2VertexData);
-        structure.add("nor", Float3VertexData);
+		Graphics4::VertexStructure structure;
+        structure.add("pos", Graphics4::Float3VertexData);
+        structure.add("tex", Graphics4::Float2VertexData);
+        structure.add("nor", Graphics4::Float3VertexData);
         
-        program = new Program;
+        program = new Graphics4::Program;
         program->setVertexShader(vertexShader);
         program->setFragmentShader(fragmentShader);
         program->link(structure);
@@ -363,11 +363,11 @@ namespace {
 		tiger = new MeshObject("tiger.obj", "tigeratlas.jpg", structure);
 		tiger->M = mat4::Translation(0.0, 0.0, -5.0);
         
-        Graphics::setRenderState(DepthTest, true);
-        Graphics::setRenderState(DepthTestCompare, ZCompareLess);
+        Graphics4::setRenderState(Graphics4::DepthTest, true);
+        Graphics4::setRenderState(Graphics4::DepthTestCompare, Graphics4::ZCompareLess);
         
-        Graphics::setTextureAddressing(tex, Kore::U, Repeat);
-        Graphics::setTextureAddressing(tex, Kore::V, Repeat);
+        Graphics4::setTextureAddressing(tex, Graphics4::U, Graphics4::Repeat);
+        Graphics4::setTextureAddressing(tex, Graphics4::V, Graphics4::Repeat);
     }
 }
 

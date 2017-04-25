@@ -3,8 +3,8 @@
 #include <Kore/TextureImpl.h>
 #include <Kore/VertexBufferImpl.h>
 #include <Kore/IndexBufferImpl.h>
-#include <Kore/Graphics/Texture.h>
-#include <Kore/Graphics/Shader.h>
+#include <Kore/Graphics4/Texture.h>
+#include <Kore/Graphics4/Shader.h>
 #include "ObjLoader.h"
 
 
@@ -13,18 +13,19 @@ namespace Kore {
         Hidden, Visible, Waiting
     };
 }
+
 class MeshObject {
     
 private:
-    Kore::VertexBuffer* vertexBuffer;               // Mesh Vertex Buffer
-    Kore::VertexBuffer* vertexBoundingBoxBuffer;    // Bounding Box Vertex Buffer
-    Kore::IndexBuffer* indexBuffer;
+    Kore::Graphics4::VertexBuffer* vertexBuffer;               // Mesh Vertex Buffer
+    Kore::Graphics4::VertexBuffer* vertexBoundingBoxBuffer;    // Bounding Box Vertex Buffer
+    Kore::Graphics4::IndexBuffer* indexBuffer;
     
     int trianglesCount;
     float* boundingBoxVertices;
     
     Mesh* mesh;
-    Kore::Texture* image;
+    Kore::Graphics4::Texture* image;
     
     Kore::uint occlusionQuery;
 
@@ -33,11 +34,11 @@ public:
     bool occluded;
     Kore::EntityMeshOcclusionState occlusionState;
     
-    MeshObject(const char* meshFile, const char* textureFile, const Kore::VertexStructure& structure, float scale = 1.0f);
+    MeshObject(const char* meshFile, const char* textureFile, const Kore::Graphics4::VertexStructure& structure, float scale = 1.0f);
     ~MeshObject();
     
     void renderOcclusionQuery();
-    void render(Kore::TextureUnit tex);
+    void render(Kore::Graphics4::TextureUnit tex);
     
     Kore::mat4 M; // Model matrix
     

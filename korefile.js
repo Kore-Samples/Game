@@ -1,4 +1,4 @@
-var project = new Project('Game', __dirname);
+let project = new Project('Game', __dirname);
 
 project.addFile('Sources/**');
 project.setDebugDir('Deployment');
