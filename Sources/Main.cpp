@@ -11,7 +11,7 @@
 #include <Kore/Log.h>
 #include "MeshObject.h"
 
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 #include <Kore/Math/Quaternion.h>
 #include <Kore/Vr/VrInterface.h>
 #include <Kore/Vr/SensorState.h>
@@ -56,7 +56,7 @@ namespace {
 	bool debug = false;
     
 	void initCamera() {
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 		playerPosition = vec3(0, 0, 0);
 #else
 		playerPosition = vec3(0, 0, 20); 
@@ -64,7 +64,7 @@ namespace {
 		globe = vec3(0, Kore::pi, 0);
 	}
 
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 	mat4 getViewMatrix(SensorState* state) {
 
 		Quaternion orientation = state->pose->vrPose->orientation;
@@ -157,7 +157,7 @@ namespace {
 
 		program->set();
 		
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 
 		VrInterface::begin();
 		for (int eye = 0; eye < 2; ++eye) {
@@ -189,17 +189,17 @@ namespace {
         mat4 V = mat4::lookAt(playerPosition, lookAt, vec3(0, 1, 0));
         V *= mat4::Rotation(globe.x(), globe.y(), globe.z());
         
-        Graphics::setMatrix(vLocation, V);
-        Graphics::setMatrix(pLocation, P);
+        Graphics4::setMatrix(vLocation, V);
+        Graphics4::setMatrix(pLocation, P);
         
-        Graphics::setColorMask(false, false, false, false);
-        Graphics::setRenderState(DepthWrite, false);
+        Graphics4::setColorMask(false, false, false, false);
+        Graphics4::setRenderState(Graphics4::DepthWrite, false);
         
         // draw bounding box for each object
         MeshObject** boundingBox = &objects[0];
         while (*boundingBox != nullptr) {
             // set the model matrix
-            Graphics::setMatrix(mLocation, (*boundingBox)->M);
+            Graphics4::setMatrix(mLocation, (*boundingBox)->M);
             
             if ((*boundingBox)->useQueries) {
                     (*boundingBox)->renderOcclusionQuery();
@@ -208,21 +208,21 @@ namespace {
             ++boundingBox;
         }
         
-        Graphics::setColorMask(true, true, true, true);
-        Graphics::setRenderState(DepthWrite, true);
+        Graphics4::setColorMask(true, true, true, true);
+        Graphics4::setRenderState(Graphics4::DepthWrite, true);
         
-        Graphics::setBlendingMode(SourceAlpha, Kore::BlendingOperation::InverseSourceAlpha);
-        Graphics::setRenderState(BlendingState, true);
-        Graphics::setRenderState(DepthTest, true);
-        Graphics::setRenderState(DepthTestCompare, ZCompareLess);
-        Graphics::setRenderState(DepthWrite, true);
+        Graphics4::setBlendingMode(Graphics4::SourceAlpha, Graphics4::BlendingOperation::InverseSourceAlpha);
+        Graphics4::setRenderState(Graphics4::BlendingState, true);
+        Graphics4::setRenderState(Graphics4::DepthTest, true);
+        Graphics4::setRenderState(Graphics4::DepthTestCompare, Graphics4::ZCompareLess);
+        Graphics4::setRenderState(Graphics4::DepthWrite, true);
         
         // draw real objects
         int renderCount = 0;
         MeshObject** current = &objects[0];
         while (*current != nullptr) {
             // set the model matrix
-            Graphics::setMatrix(mLocation, (*current)->M);
+            Graphics4::setMatrix(mLocation, (*current)->M);
             
             if ((*current)->occluded) {
                 (*current)->render(tex);
@@ -263,12 +263,12 @@ namespace {
 			break;
 		case Key_R:
 			initCamera();
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 			VrInterface::resetHmdPose();
 #endif
 			break;
 		case Key_U:
-#ifdef KORE_OCULUS
+#ifdef KORE_VR
 			sit = !sit;
 			if (sit) VrInterface::updateTrackingOrigin(TrackingOrigin::Sit);
 			else VrInterface::updateTrackingOrigin(TrackingOrigin::Stand);
