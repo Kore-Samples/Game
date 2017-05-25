@@ -7,6 +7,7 @@
 #include <Kore/Input/Mouse.h>
 #include <Kore/Graphics1/Image.h>
 #include <Kore/Graphics4/Graphics.h>
+#include <Kore/Graphics4/PipelineState.h>
 #include <Kore/Graphics1/Color.h>
 #include <Kore/Log.h>
 #include "MeshObject.h"
@@ -16,8 +17,6 @@
 #include <Kore/Vr/VrInterface.h>
 #include <Kore/Vr/SensorState.h>
 #endif
-
-#include <Kore/Graphics4/Graphics.h>
 
 using namespace Kore;
 
@@ -29,7 +28,7 @@ namespace {
     double startTime;
     Graphics4::Shader* vertexShader;
 	Graphics4::Shader* fragmentShader;
-	Graphics4::Program* program;
+	Graphics4::PipelineState* pipeline;
     
     // null terminated array of MeshObject pointers
     MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
@@ -166,7 +165,7 @@ namespace {
 
 			Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, Graphics1::Color::Black, 1.0f, 0);
 
-			program->set();
+			Graphics4::setPipeline(pipeline);
 
 			state = VrInterface::getSensorState(eye);
 			mat4 view = getViewMatrix(state);
@@ -373,16 +372,20 @@ namespace {
         structure.add("tex", Graphics4::Float2VertexData);
         structure.add("nor", Graphics4::Float3VertexData);
         
-        program = new Graphics4::Program;
-        program->setVertexShader(vertexShader);
-        program->setFragmentShader(fragmentShader);
-        program->link(structure);
+        pipeline = new Graphics4::PipelineState;
+		pipeline->inputLayout[0] = &structure;
+		pipeline->inputLayout[1] = nullptr;
+        pipeline->vertexShader = vertexShader;
+        pipeline->fragmentShader = fragmentShader;
+		pipeline->depthMode = Graphics4::ZCompareLess;
+		pipeline->depthWrite = true;
+		pipeline->compile();
         
-        tex = program->getTextureUnit("tex");
+        tex = pipeline->getTextureUnit("tex");
         
-		pLocation = program->getConstantLocation("P");
-        vLocation = program->getConstantLocation("V");
-        mLocation = program->getConstantLocation("M");
+		pLocation = pipeline->getConstantLocation("P");
+        vLocation = pipeline->getConstantLocation("V");
+        mLocation = pipeline->getConstantLocation("M");
         
 		objects[0] = new MeshObject("earth.obj", "earth.png", structure, 1.0f);
 		objects[0]->M = mat4::Translation(10.0f, 0.0f, 0.0f);
@@ -391,9 +394,6 @@ namespace {
 
 		tiger = new MeshObject("tiger.obj", "tigeratlas.jpg", structure);
 		tiger->M = mat4::Translation(0.0, 0.0, -5.0);
-        
-        Graphics4::setRenderState(Graphics4::DepthTest, true);
-        Graphics4::setRenderState(Graphics4::DepthTestCompare, Graphics4::ZCompareLess);
         
         Graphics4::setTextureAddressing(tex, Graphics4::U, Graphics4::Repeat);
         Graphics4::setTextureAddressing(tex, Graphics4::V, Graphics4::Repeat);
