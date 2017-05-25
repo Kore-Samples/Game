@@ -155,20 +155,30 @@ namespace {
 		Graphics4::begin();
 		Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, Graphics1::Color::Black, 1.0f, 0);
 
-		program->set();
+		
 		
 #ifdef KORE_VR
 
 		VrInterface::begin();
+		SensorState* state = nullptr;
 		for (int eye = 0; eye < 2; ++eye) {
 			VrInterface::beginRender(eye);
 
-			SensorState* state = VrInterface::getSensorState(eye);
+			Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, Graphics1::Color::Black, 1.0f, 0);
+
+			program->set();
+
+			state = VrInterface::getSensorState(eye);
 			mat4 view = getViewMatrix(state);
 			mat4 proj = getProjectionMatrix(state);
 
 			Graphics4::setMatrix(vLocation, view);
 			Graphics4::setMatrix(pLocation, proj);
+
+#ifdef KORE_STEAMVR
+			Graphics4::setMatrix(vLocation, state->pose->vrPose->eye);
+			Graphics4::setMatrix(pLocation, state->pose->vrPose->projection);
+#endif
 
 			// Render world
 			Graphics4::setMatrix(mLocation, tiger->M);
@@ -178,6 +188,25 @@ namespace {
 		}
 
 		VrInterface::warpSwap();
+
+		Graphics4::restoreRenderTarget();
+		Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, Graphics1::Color::Black, 1.0f, 0);
+
+		mat4 view = getViewMatrix(state);
+		mat4 proj = getProjectionMatrix(state);
+
+		Graphics4::setMatrix(vLocation, view);
+		Graphics4::setMatrix(pLocation, proj);
+
+#ifdef KORE_STEAMVR
+		Graphics4::setMatrix(vLocation, state->pose->vrPose->eye);
+		Graphics4::setMatrix(pLocation, state->pose->vrPose->projection);
+#endif
+
+		// Render world
+		Graphics4::setMatrix(mLocation, tiger->M);
+		tiger->render(tex);
+
 
 #else
         
@@ -368,6 +397,8 @@ namespace {
         
         Graphics4::setTextureAddressing(tex, Graphics4::U, Graphics4::Repeat);
         Graphics4::setTextureAddressing(tex, Graphics4::V, Graphics4::Repeat);
+
+		VrInterface::init(nullptr, nullptr, nullptr); // TODO: Remove
     }
 }
 
