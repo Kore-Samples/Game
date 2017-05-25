@@ -64,10 +64,10 @@ namespace {
 	}
 
 #ifdef KORE_VR
-	mat4 getViewMatrix(SensorState* state) {
+	mat4 getViewMatrix(SensorState& state) {
 
-		Quaternion orientation = state->pose->vrPose->orientation;
-		vec3 position = state->pose->vrPose->position;
+		Quaternion orientation = state.pose.vrPose.orientation;
+		vec3 position = state.pose.vrPose.position;
 
 		if (debug) {
 			log(Info, "Pos %f %f %f", position.x(), position.y(), position.z());
@@ -113,11 +113,11 @@ namespace {
 		return m;
 	}
 
-	mat4 getProjectionMatrix(SensorState* state) {
-		float left = state->pose->vrPose->left;
-		float right = state->pose->vrPose->right;
-		float bottom = state->pose->vrPose->bottom;
-		float top = state->pose->vrPose->top;
+	mat4 getProjectionMatrix(SensorState& state) {
+		float left = state.pose.vrPose.left;
+		float right = state.pose.vrPose.right;
+		float bottom = state.pose.vrPose.bottom;
+		float top = state.pose.vrPose.top;
 
 		// Get projection matrices
 		mat4 proj = mat4::Perspective(45, (float)width / (float)height, 0.1f, 100.0f);
@@ -159,7 +159,7 @@ namespace {
 #ifdef KORE_VR
 
 		VrInterface::begin();
-		SensorState* state = nullptr;
+		SensorState state;
 		for (int eye = 0; eye < 2; ++eye) {
 			VrInterface::beginRender(eye);
 
@@ -175,8 +175,8 @@ namespace {
 			Graphics4::setMatrix(pLocation, proj);
 
 #ifdef KORE_STEAMVR
-			Graphics4::setMatrix(vLocation, state->pose->vrPose->eye);
-			Graphics4::setMatrix(pLocation, state->pose->vrPose->projection);
+			Graphics4::setMatrix(vLocation, state.pose.vrPose.eye);
+			Graphics4::setMatrix(pLocation, state.pose.vrPose.projection);
 #endif
 
 			// Render world
@@ -198,8 +198,8 @@ namespace {
 		Graphics4::setMatrix(pLocation, proj);
 
 #ifdef KORE_STEAMVR
-		Graphics4::setMatrix(vLocation, state->pose->vrPose->eye);
-		Graphics4::setMatrix(pLocation, state->pose->vrPose->projection);
+		Graphics4::setMatrix(vLocation, state.pose.vrPose.eye);
+		Graphics4::setMatrix(pLocation, state.pose.vrPose.projection);
 #endif
 
 		// Render world
